@@ -2,141 +2,85 @@
 from flask import jsonify
 from connector import *
 import uuid
-import datetime
+from datetime import datetime
 
-# # DATA FORMATTER
-# def DataAWSFormat(data):
-#     data_format = {
-#         "ID_AWS"        : data[0],
-#         "Nama_AWS"      : data[1],
-#         "Latitude_AWS"  : data[2],
-#         "Longitude_AWS" : data[3]
-#     }
-#     return data_format
-
-# def DataSensorWeatherFormat(data):
-#     data_format = {
-#         "ID_AWOS_Weather"   : data[0],
-#         "Temp_Weather"      : data[1],
-#         "Humidity_Weather"  : data[2],
-#         "LightInten_Weather": data[3],
-#         "AirPress_Weather"  : data[4],
-#         "WindWave_Weather"  : data[5],
-#         "Rainfall_Weather"  : data[6],
-#         "Thunder_Weather"   : data[7],
-#         "UpdatedAt"         : data[8],
-#         "CreatedAt"         : data[9]
-#     }
-#     return data_format
-
-# def DataSensorAgriFormat(data):
-#     data_format = {
-#         "ID_AWOS_Agri"      : data[0],
-#         "SoilMoisture_Agri" : data[1],
-#         "SoilTemp_Agri"     : data[2],
-#         "Nitrogen_Agri"     : data[3],
-#         "Phospor_Agri"      : data[4],
-#         "Calium_Agri"       : data[5],
-#         "PHSoil_Agri"       : data[6],
-#         "UpdatedAt"         : data[7],
-#         "CreatedAt"         : data[8]
-#     }
-#     return data_format
-
-def DataTestFormat(data):
+# DATA FORMATTER
+def DataSensorFormat(data):
     data_format = {
         "ID_Test" : data[0],
         "Data_Test": data[1],
         "CreatedAt" : data[2]
     }
     return data_format
-
-# # GET DATA 
-# def GetDataAWS():
-#     try:
-#         conn = open_connection()
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT * FROM data_aws")
-#             datas = cursor.fetchall()
-#             if datas:
-#                 formatted_data = []
-#                 for data in datas:
-#                     data_result = DataAWSFormat(data)
-#                     formatted_data.append(data_result)
-#                 return jsonify(formatted_data), 200
-#             else:
-#                 return jsonify({"msg" : "No data found!"}), 200
-#     except Exception as e:
-#         return jsonify({"Error: " : str(e)}), 400
-    
-
-# def GetDataSensorWeather():
-#     try:
-#         conn = open_connection()
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT * FROM data_AWOSSky")
-#             datas = cursor.fetchall()
-#             if datas:
-#                 formatted_data = []
-#                 for data in datas:
-#                     data_result = DataSensorWeatherFormat(data)
-#                     formatted_data.append(data_result)
-#                 return jsonify(formatted_data), 200
-#             else:
-#                 return jsonify({"msg" : "No data found!"}), 200
-#     except Exception as e:
-#         return jsonify({"Error: " : str(e)}), 400
-
-# def GetDataSensorAgri():
-#     try:
-#         conn = open_connection()
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT * FROM data_AWOSAgriculture")
-#             datas = cursor.fetchall()
-#             if datas:
-#                 formatted_data = []
-#                 for data in datas:
-#                     data_result = DataSensorAgriFormat(data)
-#                     formatted_data.append(data_result)
-#                 return jsonify(formatted_data), 200
-#             else:
-#                 return jsonify({"msg" : "No data found!"}), 200
-#     except Exception as e:
-#         return jsonify({"Error: " : str(e)}), 400
-    
-
-# # SET DATA
-# def SetDataAWS(data):
-#     try:
-#         conn = open_connection()
-#         with conn.cursor() as cursor:
-#             # GET DATA REQUEST
-#             ID_AWS          = str(uuid.uuid4())
-#             Nama_AWS        = data['Nama_AWS']
-#             Latitude_AWS    = data['Latitude_AWS']
-#             Longitude_AWS   = data['Longitude_AWS']
-
-#             # INSERTING DATA 
-#             cursor.execute("INSERT INTO data_aws (ID_AWS, Nama_AWS, Latitude, Longitude) VALUES (%s, %s, %s, %s)", (ID_AWS, Nama_AWS, Latitude_AWS, Longitude_AWS))
-
-#         conn.commit()
-#         cursor.close()
-#         conn.close()
-#         return jsonify({"msg" : "Sukses menambahkan data!"}), 200
-#     except Exception as e:
-#         return jsonify({"Error: " : str(e)}), 400
     
 # UPDATE DATA AWS SENSOR WITH MQTT
-def SetDataTest(message):
+def SetDataSensor(data):
     try:
         conn = open_connection()
         with conn.cursor() as cursor:
-            ID_Test = str(uuid.uuid4())
-            Data_Test = str(message)
-            # INSERTING DATA
-            cursor.execute("INSERT INTO data_test (ID_Test, Data_Test) VALUES (%s, %s)", (ID_Test, Data_Test))
+            Data_Test = data['Data_Test']
+
+            # SEPARATING DATA
+            Data_Array = Data_Test.split(" || ")
+            
+            # DATA DEFINER 1 (GATEWAY INFO)
+            Nama_DG                 = "Gateway | T-Beam"
+            Latitude_DG             = Data_Array[15]
+            Longitude_DG            = Data_Array[16]
+
+            # SAVE DATA TO TABLE DATA GATEWAY
+            cursor.execute("INSERT INTO Data_Gateway (Nama_DG, Latitude_DG, Longitude_DG) VALUES (%s, %s, %s)", (Nama_DG, Latitude_DG, Longitude_DG))
+            conn.commit()
+
+            # GET LATEST ID
+            cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
+
+            # DATA DEFINER 2 (TIMESTAMP INFO)
+            ID_DG = cursor.fetchone()[0]
+            CapturedAt              = datetime.now()
+            ReceivedAt              = datetime.now()
+            SavedAt                 = datetime.now()
+
+            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, CapturedAt, ReceivedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, CapturedAt, ReceivedAt, SavedAt))
+            conn.commit()
+
+            # GET LATEST ID
+            cursor.execute("SELECT MAX(ID_DTR) FROM Data_TimeRecord")
+            ID_DTR                  = cursor.fetchone()[0]
+
+            # DATA DEFINER 3 (WEATHER DATA INFO)
+            Temp_DW                 = Data_Array[1]
+            Humidity_DW             = Data_Array[2]
+            LightIntensity_DW       = Data_Array[3]
+            UVLightIntensity_DW     = 0
+            AirPressure_DW          = Data_Array[7]
+            WindWaveDirection_DW    = Data_Array[0]
+            WindSpeed_DW            = Data_Array[11]
+            Rainfall_DW             = Data_Array[6]
+
+            # SAVE DATA TO TABLE DATA WEATHER
+            cursor.execute("INSERT INTO Data_Weather (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW))
+            conn.commit()
+
+            # DATA DEFINER 4 (AGRICULTURE DATA INFO)
+            SoilMoisture_DA         = 0
+            SoilTemp_DA             = 0
+            Nitrogen_DA             = Data_Array[5]
+            Phospor_DA              = Data_Array[8]
+            Calium_DA               = Data_Array[9]
+            PhSoil_DA               = Data_Array[4]
+
+            # SAVE DATA TO TABLE DATA AGRICULTURE
+            cursor.execute("INSERT INTO Data_Agriculture (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, Calium_DA, PhSoil_DA) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, Calium_DA, PhSoil_DA))
+            conn.commit()
+
+            # DATA DEFINER 5 (LORA INFO)
+            RSSI_DL                 = Data_Array[13]
+            Altitude_DL             = Data_Array[12]
+            SNR_DL                  = Data_Array[14]
+            cursor.execute("INSERT INTO Data_LORA (ID_DG, RSSI_DL, Altitude_DL, SNR_DL) VALUES (%s, %s, %s, %s)", (ID_DG, RSSI_DL, Altitude_DL, SNR_DL))
+            conn.commit()
         
-        conn.commit()
         cursor.close()
         conn.close()
         return jsonify({"msg" : "Sukses menambahkan data!"}), 200
@@ -144,16 +88,16 @@ def SetDataTest(message):
         return jsonify({"Error :" : str(e)}), 400
 
 
-def GetDataTest():
+def GetDataSensor():
     try:
         conn = open_connection()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM data_test")
+            cursor.execute("SELECT * FROM Data_Test")
             datas = cursor.fetchall()
             if datas:
                 formatted_data = []
                 for data in datas:
-                    data_result = DataTestFormat(data)
+                    data_result = DataSensorFormat(data)
                     formatted_data.append(data_result)
                 return jsonify(formatted_data), 200
             else:
