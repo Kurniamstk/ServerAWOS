@@ -2,6 +2,7 @@
 from flask import jsonify
 from connector import *
 import uuid
+import openpyxl
 from datetime import datetime
 
 # DATA FORMATTER
@@ -12,6 +13,62 @@ def DataSensorFormat(data):
         "CreatedAt" : data[2]
     }
     return data_format
+    
+# UPDATE DATA AWS SENSOR WITH MQTT
+def SetDataSensorExcel():
+    try:
+        conn = open_connection()
+        with conn.cursor() as cursor:
+            # READ DATA FROM EXCEL
+            workbook = openpyxl.load_workbook('./data.xlsx')
+            sheet = workbook.active
+            # DATA DEFINER 1 (GATEWAY INFO)
+            Nama_DG                 = "Gateway | T-Beam"
+            Latitude_DG             = '-6.9816305'
+            Longitude_DG            = '107.6223513'
+
+            # SAVE DATA TO TABLE DATA GATEWAY
+            cursor.execute("INSERT INTO Data_Gateway (Nama_DG, Latitude_DG, Longitude_DG) VALUES (%s, %s, %s)", (Nama_DG, Latitude_DG, Longitude_DG))
+            conn.commit()
+
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                Column1, Column2, datetime, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction = row
+
+                # GET LATEST ID
+                cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
+
+                # DATA DEFINER 2 (TIMESTAMP INFO)
+                ID_DG = cursor.fetchone()[0]
+                CapturedAt              = datetime
+                ReceivedAt              = datetime
+                SavedAt                 = datetime.now()
+
+                cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, CapturedAt, ReceivedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, CapturedAt, ReceivedAt, SavedAt))
+                conn.commit()
+
+                # GET LATEST ID
+                cursor.execute("SELECT MAX(ID_DTR) FROM Data_TimeRecord")
+                ID_DTR                  = cursor.fetchone()[0]
+
+                # DATA DEFINER 3 (WEATHER DATA INFO)
+                Temp_DW                 = temperature
+                Humidity_DW             = humidity
+                LightIntensity_DW       = light_intensity
+                UVLightIntensity_DW     = uv
+                AirPressure_DW          = air_pressure
+                WindWaveDirection_DW    = wind_direction
+                WindSpeed_DW            = wind_speed
+                Rainfall_DW             = rainfall
+
+                # SAVE DATA TO TABLE DATA WEATHER
+                cursor.execute("INSERT INTO Data_Weather (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW))
+                conn.commit()
+        
+        cursor.close()
+        conn.close()
+        return jsonify({"msg" : "Sukses menambahkan data!"}), 200
+    except Exception as e:
+        return jsonify({"Error :" : str(e)}), 400
     
 # UPDATE DATA AWS SENSOR WITH MQTT
 def SetDataSensor(data):
@@ -104,4 +161,3 @@ def GetDataSensor():
                 return jsonify({"msg" : "No data found!"}), 200
     except Exception as e:
         return jsonify({"Error: " : str(e)}), 400
-    

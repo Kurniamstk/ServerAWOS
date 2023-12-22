@@ -20,6 +20,12 @@ def DataSensor():
         else:
             data = request.form.to_dict()
             return Functions.SetDataSensor(data)
-        
+
+@app.route('/DataExcel', methods=['GET'])
+def DataExcel():
+    if request.method == "GET":
+        return Functions.SetDataSensorExcel()
+
+
 if __name__ == '__main__':
     app.run()
