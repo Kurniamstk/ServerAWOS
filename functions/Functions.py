@@ -24,7 +24,7 @@ def SetDataSensorExcel():
         with conn.cursor() as cursor:
             current_directory   = Path.cwd()
                 
-            file_path = current_directory / 'data/data_sensor.xlsx'
+            file_path = current_directory / 'ServerAWOS/data/data_sensor.xlsx'
 
             # READ DATA FROM EXCEL
             workbook = openpyxl.load_workbook(file_path, data_only=True)
