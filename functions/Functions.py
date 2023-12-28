@@ -23,8 +23,8 @@ def SetDataSensorExcel():
         conn = open_connection()
         with conn.cursor() as cursor:
             current_directory   = Path.cwd()
-
-            file_path           = current_directory / 'functions/data.xlsx'
+                
+            file_path = current_directory / 'data/data_sensor.xlsx'
 
             # READ DATA FROM EXCEL
             workbook = openpyxl.load_workbook(file_path, data_only=True)
@@ -39,7 +39,7 @@ def SetDataSensorExcel():
             conn.commit()
 
             for row in sheet.iter_rows(min_row=2, values_only=True):
-                Column1, Column2, time_date, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction = row
+                Column1, Column2, time_date, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction, nitrogen, phospor, potassium, ph, soil_temp, electrical, soil_moisture = row
 
                 # GET LATEST ID
                 cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
@@ -70,7 +70,18 @@ def SetDataSensorExcel():
                 # SAVE DATA TO TABLE DATA WEATHER
                 cursor.execute("INSERT INTO Data_Weather (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW))
                 conn.commit()
-        
+
+                # DATA DEFINER 4 (SOIL DATA INFO)
+                SoilMoisture_DA         = soil_moisture
+                SoilTemp_DA             = soil_temp
+                Nitrogen_DA             = nitrogen
+                Phospor_DA              = phospor
+                PhSoil_DA               = ph
+                ElectricalConduct_DA    = electrical
+
+                cursor.execute("INSERT INTO Data_Agriculture (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA))
+                conn.commit()
+
         cursor.close()
         conn.close()
         return jsonify({"msg" : "Sukses menambahkan data!"}), 200
