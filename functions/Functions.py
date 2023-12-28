@@ -1,9 +1,12 @@
 # LIBRARY IMPORT
-from flask import jsonify
-from connector import *
 import uuid
 import openpyxl
+import os
+from flask import jsonify
+from connector import *
 from datetime import datetime
+from pathlib import Path
+
 
 # DATA FORMATTER
 def DataSensorFormat(data):
@@ -19,8 +22,12 @@ def SetDataSensorExcel():
     try:
         conn = open_connection()
         with conn.cursor() as cursor:
+            current_directory   = Path.cwd()
+
+            file_path           = current_directory / 'functions/data.xlsx'
+
             # READ DATA FROM EXCEL
-            workbook = openpyxl.load_workbook('./data.xlsx')
+            workbook = openpyxl.load_workbook(file_path, data_only=True)
             sheet = workbook.active
             # DATA DEFINER 1 (GATEWAY INFO)
             Nama_DG                 = "Gateway | T-Beam"
@@ -32,15 +39,15 @@ def SetDataSensorExcel():
             conn.commit()
 
             for row in sheet.iter_rows(min_row=2, values_only=True):
-                Column1, Column2, datetime, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction = row
+                Column1, Column2, time_date, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction = row
 
                 # GET LATEST ID
                 cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
 
                 # DATA DEFINER 2 (TIMESTAMP INFO)
                 ID_DG = cursor.fetchone()[0]
-                CapturedAt              = datetime
-                ReceivedAt              = datetime
+                CapturedAt              = time_date
+                ReceivedAt              = time_date
                 SavedAt                 = datetime.now()
 
                 cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, CapturedAt, ReceivedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, CapturedAt, ReceivedAt, SavedAt))
