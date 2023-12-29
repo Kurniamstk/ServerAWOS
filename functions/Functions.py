@@ -58,7 +58,8 @@ def SetDataSensor(data):
                 return jsonify({"Error": "Format tanggal tidak valid."}), 400
             
             # CONVERT DATETIME
-            captured_at_formatted   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            captured_at_formatted_str   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            captured_at_formatted       = datetime.strptime(captured_at_formatted_str, "%Y-%m-%d %H:%M:%S")
 
             # RANDOM TIME
             random_time = random.uniform(1,5)
