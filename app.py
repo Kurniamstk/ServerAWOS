@@ -1,7 +1,7 @@
 # LIBRARY IMPORT
 from flask import Flask, jsonify, request
 from connector import *
-import json
+
 # FUNCTION IMPORT
 from functions import Functions
 
@@ -20,12 +20,6 @@ def DataSensor():
         else:
             data = request.form.to_dict()
             return Functions.SetDataSensor(data)
-
-@app.route('/DataExcel', methods=['GET'])
-def DataExcel():
-    if request.method == "GET":
-        return Functions.SetDataSensorExcel()
-
 
 if __name__ == '__main__':
     app.run()

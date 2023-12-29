@@ -1,94 +1,11 @@
 # LIBRARY IMPORT
 import uuid
-import openpyxl
 import os
 from flask import jsonify
 from connector import *
 from datetime import datetime
-from pathlib import Path
-
-
-# DATA FORMATTER
-def DataSensorFormat(data):
-    data_format = {
-        "ID_Test" : data[0],
-        "Data_Test": data[1],
-        "CreatedAt" : data[2]
-    }
-    return data_format
     
-# UPDATE DATA AWS SENSOR WITH MQTT
-def SetDataSensorExcel():
-    try:
-        conn = open_connection()
-        with conn.cursor() as cursor:
-            current_directory   = Path.cwd()
-                
-            file_path = current_directory / 'ServerAWOS/data/data_sensor.xlsx'
-
-            # READ DATA FROM EXCEL
-            workbook = openpyxl.load_workbook(file_path, data_only=True)
-            sheet = workbook.active
-            # DATA DEFINER 1 (GATEWAY INFO)
-            Nama_DG                 = "Gateway | T-Beam"
-            Latitude_DG             = '-6.9816305'
-            Longitude_DG            = '107.6223513'
-
-            # SAVE DATA TO TABLE DATA GATEWAY
-            cursor.execute("INSERT INTO Data_Gateway (Nama_DG, Latitude_DG, Longitude_DG) VALUES (%s, %s, %s)", (Nama_DG, Latitude_DG, Longitude_DG))
-            conn.commit()
-
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                Column1, Column2, time_date, temperature, humidity, air_pressure, light_intensity, rainfall, uv, wind_speed, wind_direction, nitrogen, phospor, potassium, ph, soil_temp, electrical, soil_moisture = row
-
-                # GET LATEST ID
-                cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
-
-                # DATA DEFINER 2 (TIMESTAMP INFO)
-                ID_DG = cursor.fetchone()[0]
-                CapturedAt              = time_date
-                ReceivedAt              = time_date
-                SavedAt                 = datetime.now()
-
-                cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, CapturedAt, ReceivedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, CapturedAt, ReceivedAt, SavedAt))
-                conn.commit()
-
-                # GET LATEST ID
-                cursor.execute("SELECT MAX(ID_DTR) FROM Data_TimeRecord")
-                ID_DTR                  = cursor.fetchone()[0]
-
-                # DATA DEFINER 3 (WEATHER DATA INFO)
-                Temp_DW                 = temperature
-                Humidity_DW             = humidity
-                LightIntensity_DW       = light_intensity
-                UVLightIntensity_DW     = uv
-                AirPressure_DW          = air_pressure
-                WindWaveDirection_DW    = wind_direction
-                WindSpeed_DW            = wind_speed
-                Rainfall_DW             = rainfall
-
-                # SAVE DATA TO TABLE DATA WEATHER
-                cursor.execute("INSERT INTO Data_Weather (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW))
-                conn.commit()
-
-                # DATA DEFINER 4 (SOIL DATA INFO)
-                SoilMoisture_DA         = soil_moisture
-                SoilTemp_DA             = soil_temp
-                Nitrogen_DA             = nitrogen
-                Phospor_DA              = phospor
-                PhSoil_DA               = ph
-                ElectricalConduct_DA    = electrical
-
-                cursor.execute("INSERT INTO Data_Agriculture (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA))
-                conn.commit()
-
-        cursor.close()
-        conn.close()
-        return jsonify({"msg" : "Sukses menambahkan data!"}), 200
-    except Exception as e:
-        return jsonify({"Error :" : str(e)}), 400
-    
-# UPDATE DATA AWS SENSOR WITH MQTT
+# SET DATA SENSOR
 def SetDataSensor(data):
     try:
         conn = open_connection()
@@ -98,83 +15,91 @@ def SetDataSensor(data):
             # SEPARATING DATA
             Data_Array = Data_Test.split(" || ")
             
-            # DATA DEFINER 1 (GATEWAY INFO)
+            # DATA DEFINER 1 (SOIL)
+            SoilMoisture_DA         = Data_Array[0]
+            SoilTemp_DA             = Data_Array[1]
+            Nitrogen_DA             = Data_Array[2]
+            Phospor_DA              = Data_Array[3]
+            PhSoil_DA               = Data_Array[4]
+            ElectricalConduct_DA    = Data_Array[5]
+            Potasium_DA             = Data_Array[6]
+
+            # DATA DEFINER 2 (WEATHER)
+            Temp_DW                 = Data_Array[7]
+            Humidity_DW             = Data_Array[8]
+            LightIntensity_DW       = Data_Array[9]
+            UVLightIntensity_DW     = Data_Array[10]
+            AirPressure_DW          = Data_Array[11]
+            WindWaveDirection_DW    = Data_Array[12]
+            WindSpeed_DW            = Data_Array[13]
+            Rainfall_DW             = Data_Array[14]
+            GPS_AWS                 = Data_Array[15]
+
+            # DATA DEFINER 3 (GATEWAY INFO)
             Nama_DG                 = "Gateway | T-Beam"
-            Latitude_DG             = Data_Array[15]
-            Longitude_DG            = Data_Array[16]
+            CapturedAt_DTR          = Data_Array[16]
+            Latitude_DG             = Data_Array[17]
+            Longitude_DG            = Data_Array[18]
+            Altitude_DG             = Data_Array[19]
+            RSSI_DG                 = Data_Array[20]
+            
+            # EXTRACT LATITUDE & LONGITUDE AWS
+            Data_GPS                = GPS_AWS.split(",")
+            Latitude_AWS            = Data_GPS[0].strip()
+            Longitude_AWS           = Data_GPS[1].strip()
 
-            # SAVE DATA TO TABLE DATA GATEWAY
-            cursor.execute("INSERT INTO Data_Gateway (Nama_DG, Latitude_DG, Longitude_DG) VALUES (%s, %s, %s)", (Nama_DG, Latitude_DG, Longitude_DG))
+            timenow                 = datetime.now()
+
+            # SAVING AWS DATA
+            cursor.execute("INSERT INTO Data_AWS (Latitude_AWS, Longitude_AWS) VALUES (%s, %s)", (Latitude_AWS, Longitude_AWS))
+            conn.commit()
+            
+            # SAVING GATEWAY DATA
+            cursor.execute("INSERT INTO Data_Gateway (Nama_DG, Latitude_DG, Longitude_DG, Altitude_DG, RSSI_DG) VALUES (%s, %s, %s, %s, %s)", (Nama_DG, Latitude_DG, Longitude_DG, Altitude_DG, RSSI_DG))
             conn.commit()
 
-            # GET LATEST ID
+            # GET LATEST ID DATA GATEWAY
             cursor.execute("SELECT MAX(ID_DG) FROM Data_Gateway")
-
-            # DATA DEFINER 2 (TIMESTAMP INFO)
             ID_DG = cursor.fetchone()[0]
-            CapturedAt              = datetime.now()
-            ReceivedAt              = datetime.now()
-            SavedAt                 = datetime.now()
 
-            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, CapturedAt, ReceivedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, CapturedAt, ReceivedAt, SavedAt))
+            # GET LATEST ID DATA AWS
+            cursor.execute("SELECT MAX(ID_AWS) FROM Data_AWS")
+            ID_AWS = cursor.fetchone()[0]
+            
+            # SAVING TIME RECORD DATA
+            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, CapturedAt_DTR, timenow))
             conn.commit()
 
-            # GET LATEST ID
+            # GET LATEST ID DATA TIME RECORD
             cursor.execute("SELECT MAX(ID_DTR) FROM Data_TimeRecord")
             ID_DTR                  = cursor.fetchone()[0]
 
-            # DATA DEFINER 3 (WEATHER DATA INFO)
-            Temp_DW                 = Data_Array[1]
-            Humidity_DW             = Data_Array[2]
-            LightIntensity_DW       = Data_Array[3]
-            UVLightIntensity_DW     = 0
-            AirPressure_DW          = Data_Array[7]
-            WindWaveDirection_DW    = Data_Array[0]
-            WindSpeed_DW            = Data_Array[11]
-            Rainfall_DW             = Data_Array[6]
-
-            # SAVE DATA TO TABLE DATA WEATHER
+            # SAVING WEATHER DATA
             cursor.execute("INSERT INTO Data_Weather (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, Temp_DW, Humidity_DW, LightIntensity_DW, UVLightIntensity_DW, AirPressure_DW, WindWaveDirection_DW, WindSpeed_DW, Rainfall_DW))
             conn.commit()
 
-            # DATA DEFINER 4 (AGRICULTURE DATA INFO)
-            SoilMoisture_DA         = 0
-            SoilTemp_DA             = 0
-            Nitrogen_DA             = Data_Array[5]
-            Phospor_DA              = Data_Array[8]
-            Calium_DA               = Data_Array[9]
-            PhSoil_DA               = Data_Array[4]
-
-            # SAVE DATA TO TABLE DATA AGRICULTURE
-            cursor.execute("INSERT INTO Data_Agriculture (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, Calium_DA, PhSoil_DA) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, Calium_DA, PhSoil_DA))
+            # SAVING AGRICULTURE DATA
+            cursor.execute("INSERT INTO Data_Agriculture (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA, Potasium_DA) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (ID_DTR, SoilMoisture_DA, SoilTemp_DA, Nitrogen_DA, Phospor_DA, PhSoil_DA, ElectricalConduct_DA, Potasium_DA))
             conn.commit()
 
-            # DATA DEFINER 5 (LORA INFO)
-            RSSI_DL                 = Data_Array[13]
-            Altitude_DL             = Data_Array[12]
-            SNR_DL                  = Data_Array[14]
-            cursor.execute("INSERT INTO Data_LORA (ID_DG, RSSI_DL, Altitude_DL, SNR_DL) VALUES (%s, %s, %s, %s)", (ID_DG, RSSI_DL, Altitude_DL, SNR_DL))
-            conn.commit()
-        
         cursor.close()
         conn.close()
         return jsonify({"msg" : "Sukses menambahkan data!"}), 200
     except Exception as e:
         return jsonify({"Error :" : str(e)}), 400
 
-
 def GetDataSensor():
     try:
         conn = open_connection()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM Data_Test")
-            datas = cursor.fetchall()
+            cursor.execute("SELECT * FROM Data_Gateway JOIN Data_TimeRecord ON Data_Gateway.`ID_DG` = Data_TimeRecord.`ID_DG` JOIN Data_AWS ON Data_TimeRecord.`ID_AWS` = Data_AWS.`ID_AWS` JOIN Data_Agriculture ON Data_TimeRecord.`ID_DTR` = Data_Agriculture.`ID_DTR` JOIN Data_Weather ON Data_TimeRecord.`ID_DTR` = Data_Weather.`ID_DTR` ORDER BY Data_TimeRecord.`ID_DTR` DESC LIMIT 1")
+            datas = cursor.fetchone()
             if datas:
-                formatted_data = []
-                for data in datas:
-                    data_result = DataSensorFormat(data)
-                    formatted_data.append(data_result)
-                return jsonify(formatted_data), 200
+                column_names = [column[0] for column in cursor.description]
+
+                data_dict = dict(zip(column_names, datas))
+
+                return jsonify(data_dict), 200
             else:
                 return jsonify({"msg" : "No data found!"}), 200
     except Exception as e:
