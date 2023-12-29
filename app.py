@@ -1,5 +1,6 @@
 # LIBRARY IMPORT
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from connector import *
 
 # FUNCTION IMPORT
@@ -7,6 +8,7 @@ from functions import Functions
 
 # APP CONFIGURATION
 app = Flask(__name__)
+CORS(app, origins='*')
 app.debug = True
 
 @app.route("/DataSensor", methods=['GET', 'POST'])
