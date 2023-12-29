@@ -1,10 +1,12 @@
 # LIBRARY IMPORT
 import uuid
 import os
+import time
+import random
 import pytz
 from flask import jsonify
 from connector import *
-from datetime import datetime
+from datetime import datetime, timedelta
     
 # SET DATA SENSOR
 def SetDataSensor(data):
@@ -58,6 +60,10 @@ def SetDataSensor(data):
             # CONVERT DATETIME
             captured_at_formatted   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
+            # RANDOM TIME
+            random_time = random.uniform(1,5)
+            SavedAt     = captured_at_formatted + timedelta(seconds=random_time)
+
             # TIMENOW
             timezone_jakarta        = pytz.timezone('Asia/Jakarta')
 
@@ -80,7 +86,7 @@ def SetDataSensor(data):
             ID_AWS = cursor.fetchone()[0]
             
             # SAVING TIME RECORD DATA
-            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, captured_at_formatted, timenow))
+            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, captured_at_formatted, SavedAt))
             conn.commit()
 
             # GET LATEST ID DATA TIME RECORD
