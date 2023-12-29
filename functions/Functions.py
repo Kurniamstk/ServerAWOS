@@ -1,6 +1,7 @@
 # LIBRARY IMPORT
 import uuid
 import os
+import pytz
 from flask import jsonify
 from connector import *
 from datetime import datetime
@@ -48,7 +49,19 @@ def SetDataSensor(data):
             Latitude_AWS            = Data_GPS[0].strip()
             Longitude_AWS           = Data_GPS[1].strip()
 
-            timenow                 = datetime.now()
+            # DATETIME
+            try:
+                captured_at_datetime = datetime.strptime(CapturedAt_DTR, "%a, %d %b %Y %H:%M:%S GMT")
+            except ValueError:
+                return jsonify({"Error": "Format tanggal tidak valid."}), 400
+            
+            # CONVERT DATETIME
+            captured_at_formatted   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+            # TIMENOW
+            timezone_jakarta        = pytz.timezone('Asia/Jakarta')
+
+            timenow                 = datetime.now(timezone_jakarta)
 
             # SAVING AWS DATA
             cursor.execute("INSERT INTO Data_AWS (Latitude_AWS, Longitude_AWS) VALUES (%s, %s)", (Latitude_AWS, Longitude_AWS))
@@ -67,7 +80,7 @@ def SetDataSensor(data):
             ID_AWS = cursor.fetchone()[0]
             
             # SAVING TIME RECORD DATA
-            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, CapturedAt_DTR, timenow))
+            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, captured_at_formatted, timenow))
             conn.commit()
 
             # GET LATEST ID DATA TIME RECORD
