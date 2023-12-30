@@ -23,5 +23,10 @@ def DataSensor():
             data = request.form.to_dict()
             return Functions.SetDataSensor(data)
 
+@app.route("/DataSensorFull", methods=['GET'])
+def DataSensorFull():
+    if request.method == "GET":
+        return Functions.GetAllDataSensor()
+
 if __name__ == '__main__':
     app.run()
