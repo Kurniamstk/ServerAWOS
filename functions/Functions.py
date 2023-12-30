@@ -130,14 +130,17 @@ def GetAllDataSensor():
         conn = open_connection()
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM Data_Gateway JOIN Data_TimeRecord ON Data_Gateway.`ID_DG` = Data_TimeRecord.`ID_DG` JOIN Data_AWS ON Data_TimeRecord.`ID_AWS` = Data_AWS.`ID_AWS` JOIN Data_Agriculture ON Data_TimeRecord.`ID_DTR` = Data_Agriculture.`ID_DTR` JOIN Data_Weather ON Data_TimeRecord.`ID_DTR` = Data_Weather.`ID_DTR`")
-            datas = cursor.fetchone()
+            datas = cursor.fetchall()
             if datas:
                 column_names = [column[0] for column in cursor.description]
 
-                data_dict = dict(zip(column_names, datas))
+                data_list = []
+                for row in datas:
+                    data_dict = dict(zip(column_names, row))
+                    data_list.append(data_dict)
 
-                return jsonify(data_dict), 200
+                return jsonify(data_list), 200
             else:
-                return jsonify({"msg" : "No data found!"}), 200
+                return jsonify({"msg": "No data found!"}), 200
     except Exception as e:
-        return jsonify({"Error: " : str(e)}), 400
+        return jsonify({"Error:": str(e)}), 400
