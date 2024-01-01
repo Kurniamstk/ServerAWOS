@@ -51,6 +51,9 @@ def SetDataSensor(data):
             Latitude_AWS            = Data_GPS[0].strip()
             Longitude_AWS           = Data_GPS[1].strip()
 
+            if (CapturedAt_DTR == "INVALID"):
+                CapturedAt_DTR = datetime.now()
+                
             # DATETIME
             try:
                 captured_at_datetime = datetime.strptime(CapturedAt_DTR, "%a, %d %b %Y %H:%M:%S GMT")
