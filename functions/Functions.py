@@ -52,18 +52,18 @@ def SetDataSensor(data):
             Longitude_AWS           = Data_GPS[1].strip()
 
             if (CapturedAt_DTR == "INVALID"):
-                CapturedAt_DTR = datetime.now()
-
-            # DATETIME
-            try:
-                captured_at_datetime = datetime.strptime(CapturedAt_DTR, "%a, %d %b %Y %H:%M:%S GMT")
-            except ValueError:
-                return jsonify({"Error": "Format tanggal tidak valid."}), 400
+                captured_at_formatted   = datetime.now()
+            else :
+                # DATETIME
+                try:
+                    captured_at_datetime = datetime.strptime(CapturedAt_DTR, "%a, %d %b %Y %H:%M:%S GMT")
+                except ValueError:
+                    return jsonify({"Error": "Format tanggal tidak valid."}), 400
+                
+                # CONVERT DATETIME
+                captured_at_formatted_str   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                captured_at_formatted       = datetime.strptime(captured_at_formatted_str, "%Y-%m-%d %H:%M:%S")
             
-            # CONVERT DATETIME
-            captured_at_formatted_str   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            captured_at_formatted       = datetime.strptime(captured_at_formatted_str, "%Y-%m-%d %H:%M:%S")
-
             # RANDOM TIME
             random_time = random.uniform(1,5)
             SavedAt     = captured_at_formatted + timedelta(seconds=random_time)
