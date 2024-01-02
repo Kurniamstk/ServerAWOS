@@ -13,7 +13,7 @@ def SetDataSensor(data):
     try:
         conn = open_connection()
         with conn.cursor() as cursor:
-            Data_Test = data['Data_Test']
+            Data_Test = data.get('Data_Test')
 
             # SEPARATING DATA
             Data_Array = Data_Test.split(" || ")
@@ -53,7 +53,7 @@ def SetDataSensor(data):
 
             if (CapturedAt_DTR == "INVALID"):
                 CapturedAt_DTR = datetime.now()
-                
+
             # DATETIME
             try:
                 captured_at_datetime = datetime.strptime(CapturedAt_DTR, "%a, %d %b %Y %H:%M:%S GMT")

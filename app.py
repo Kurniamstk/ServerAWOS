@@ -16,11 +16,13 @@ def DataSensor():
     if request.method == "GET":
         return Functions.GetDataSensor()
     elif request.method == "POST":
-        # CHECK DATA FORM AVAILABILITY
-        if 'multipart/form-data' not in request.content_type:
-            return jsonify({"status" : "Missing form-data in request"}), 404
+        # CHECK CONTENT TYPE
+        if 'application/json' not in request.content_type:
+            return jsonify({"status": "Unsupported Media Type. Use 'application/json'"}), 415
         else:
-            data = request.form.to_dict()
+            data = request.get_json()
+            if not data:
+                return jsonify({"status": "Invalid JSON format in request"}), 400
             return Functions.SetDataSensor(data)
 
 @app.route("/DataSensorFull", methods=['GET'])
