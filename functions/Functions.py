@@ -37,14 +37,14 @@ def SetDataSensor(data):
             WindSpeed_DW            = Data_Array[13]
             Rainfall_DW             = Data_Array[14]
             GPS_AWS                 = Data_Array[15]
-
+            Actor_NUMBER            = Data_Array[16]
             # DATA DEFINER 3 (GATEWAY INFO)
             Nama_DG                 = "Gateway | T-Beam"
-            CapturedAt_DTR          = Data_Array[16]
-            Latitude_DG             = Data_Array[17]
-            Longitude_DG            = Data_Array[18]
-            Altitude_DG             = Data_Array[19]
-            RSSI_DG                 = Data_Array[20]
+            CapturedAt_DTR          = Data_Array[17]
+            Latitude_DG             = Data_Array[18]
+            Longitude_DG            = Data_Array[19]
+            Altitude_DG             = Data_Array[20]
+            RSSI_DG                 = Data_Array[21]
             
             # EXTRACT LATITUDE & LONGITUDE AWS
             Data_GPS                = GPS_AWS.split(",")
