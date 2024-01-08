@@ -51,8 +51,11 @@ def SetDataSensor(data):
             Latitude_AWS            = Data_GPS[0].strip()
             Longitude_AWS           = Data_GPS[1].strip()
 
+            # TIMENOW
+            timezone_jakarta        = pytz.timezone('Asia/Jakarta')
+            
             if (CapturedAt_DTR == "INVALID"):
-                captured_at_formatted   = datetime.now()
+                captured_at_formatted   = datetime.now(timezone_jakarta)
             else :
                 # DATETIME
                 try:
@@ -63,15 +66,11 @@ def SetDataSensor(data):
                 # CONVERT DATETIME
                 captured_at_formatted_str   = captured_at_datetime.strftime("%Y-%m-%d %H:%M:%S")
                 captured_at_formatted       = datetime.strptime(captured_at_formatted_str, "%Y-%m-%d %H:%M:%S")
+
             
-            # RANDOM TIME
-            random_time = random.uniform(1,5)
-            SavedAt     = captured_at_formatted + timedelta(seconds=random_time)
-
-            # TIMENOW
-            timezone_jakarta        = pytz.timezone('Asia/Jakarta')
-
-            timenow                 = datetime.now(timezone_jakarta)
+            # DATETIME FINAL
+            SavedAt                 = datetime.now(timezone_jakarta)
+            CapturedAt_DTR          = captured_at_formatted
 
             # SAVING AWS DATA
             cursor.execute("INSERT INTO Data_AWS (Latitude_AWS, Longitude_AWS) VALUES (%s, %s)", (Latitude_AWS, Longitude_AWS))
@@ -90,7 +89,7 @@ def SetDataSensor(data):
             ID_AWS = cursor.fetchone()[0]
             
             # SAVING TIME RECORD DATA
-            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, captured_at_formatted, SavedAt))
+            cursor.execute("INSERT INTO Data_TimeRecord (ID_DG, ID_AWS, CapturedAt, SavedAt) VALUES (%s, %s, %s, %s)", (ID_DG, ID_AWS, CapturedAt_DTR, SavedAt))
             conn.commit()
 
             # GET LATEST ID DATA TIME RECORD
